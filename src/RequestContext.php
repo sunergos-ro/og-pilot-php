@@ -85,8 +85,56 @@ class RequestContext
             return self::extractPathFromUrl($request['url']);
         }
 
+        // Try auto-detecting from framework (Laravel)
+        $frameworkPath = self::getPathFromFramework();
+        if ($frameworkPath !== null) {
+            return $frameworkPath;
+        }
+
         // Fallback to server/environment variables
         return self::getPathFromServerVars();
+    }
+
+    /**
+     * Auto-detect the current request path from common PHP frameworks.
+     *
+     * Currently supports:
+     * - Laravel: Uses the request() helper or service container automatically
+     *
+     * @internal
+     */
+    private static function getPathFromFramework(): ?string
+    {
+        // Try Laravel first
+        // Check if Laravel's request() helper function exists
+        if (function_exists('request')) {
+            try {
+                $request = request();
+                // Verify it's a Laravel request object
+                if ($request !== null && method_exists($request, 'getRequestUri')) {
+                    return $request->getRequestUri();
+                }
+            } catch (\Throwable) {
+                // Ignore - request() may throw if called outside HTTP context
+            }
+        }
+
+        // Alternative: Try Laravel's service container directly
+        if (function_exists('app')) {
+            try {
+                $app = app();
+                if ($app !== null && method_exists($app, 'bound') && $app->bound('request')) {
+                    $request = $app->make('request');
+                    if ($request !== null && method_exists($request, 'getRequestUri')) {
+                        return $request->getRequestUri();
+                    }
+                }
+            } catch (\Throwable) {
+                // Ignore - app() may throw if container not available
+            }
+        }
+
+        return null;
     }
 
     /**

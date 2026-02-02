@@ -156,36 +156,30 @@ The client automatically injects a `path` parameter on every request:
 
 | Option | Behavior |
 |--------|----------|
-| `default: false` | Uses the current request path when available (via request context or `$_SERVER`), then falls back to `/` |
+| `default: false` | Uses the current request path when available (via framework auto-detection, request context, or `$_SERVER`), then falls back to `/` |
 | `default: true` | Forces the `path` parameter to `/`, regardless of the current request (unless `path` is provided explicitly) |
 | `path: "/..."` | Uses the provided path verbatim (normalized to start with `/`), overriding auto-resolution |
 
-### Setting Up Request Context
+### Automatic Framework Detection
 
-To enable automatic path resolution, set the current request context in your middleware:
+The library automatically detects the current request path from popular PHP frameworks:
 
-**Laravel Middleware:**
+**Laravel** - Zero setup required! The library automatically uses Laravel's `request()` helper to get the current path. Just use OG Pilot anywhere in your Laravel application:
 
 ```php
-use Sunergos\OgPilot\OgPilot;
+use Sunergos\OgPilot\Facades\OgPilot;
 
-class OgPilotMiddleware
-{
-    public function handle($request, $next)
-    {
-        OgPilot::setCurrentRequest([
-            'url' => $request->fullUrl(),
-            'path' => $request->getRequestUri()
-        ]);
-
-        $response = $next($request);
-
-        OgPilot::clearCurrentRequest();
-
-        return $response;
-    }
-}
+// In a controller, view, or anywhere in your Laravel app
+$imageUrl = OgPilot::createImage([
+    'template' => 'blog_post',
+    'title' => 'My Blog Post',
+]);
+// path is automatically captured from the current request
 ```
+
+### Manual Request Context (Other Frameworks)
+
+For non-Laravel frameworks, set the current request context manually:
 
 **Vanilla PHP:**
 
@@ -214,6 +208,24 @@ $imageUrl = OgPilot::withRequestContext(
     ['url' => $_SERVER['REQUEST_URI']],
     fn() => OgPilot::createImage(['title' => 'My Page'])
 );
+```
+
+**Symfony Middleware:**
+
+```php
+use Sunergos\OgPilot\OgPilot;
+use Symfony\Component\HttpKernel\Event\RequestEvent;
+
+class OgPilotListener
+{
+    public function onKernelRequest(RequestEvent $event): void
+    {
+        $request = $event->getRequest();
+        OgPilot::setCurrentRequest([
+            'path' => $request->getRequestUri()
+        ]);
+    }
+}
 ```
 
 ### Manual Path Override
