@@ -21,6 +21,42 @@ class OgPilot
     }
 
     /**
+     * Set the current request context for automatic path resolution.
+     *
+     * @param array $request Request info with 'url' and/or 'path' keys
+     *
+     * @example
+     * ```php
+     * OgPilot::setCurrentRequest(['url' => $_SERVER['REQUEST_URI']]);
+     * ```
+     */
+    public static function setCurrentRequest(array $request): void
+    {
+        RequestContext::setCurrentRequest($request);
+    }
+
+    /**
+     * Clear the current request context.
+     */
+    public static function clearCurrentRequest(): void
+    {
+        RequestContext::clearCurrentRequest();
+    }
+
+    /**
+     * Run a callback with the given request context.
+     *
+     * @template T
+     * @param array $request Request info with 'url' and/or 'path' keys
+     * @param callable(): T $callback
+     * @return T
+     */
+    public static function withRequestContext(array $request, callable $callback): mixed
+    {
+        return RequestContext::withRequestContext($request, $callback);
+    }
+
+    /**
      * Configure OG Pilot with a callback.
      *
      * @param callable(Configuration): void $callback

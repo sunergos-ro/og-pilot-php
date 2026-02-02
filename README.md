@@ -139,12 +139,104 @@ The `createImage` method accepts two arguments:
    - `template`: Template name
    - `title`: Image title (required)
    - `description`: Image description
+   - `path`: Request path for analytics (auto-resolved if not provided)
    - Any other template-specific parameters
 
 2. **options** (array): Request options
    - `json`: Set to `true` to receive JSON metadata instead of a URL
    - `iat`: Timestamp for cache control (accepts Unix timestamp, DateTime, or milliseconds)
    - `headers`: Additional HTTP headers
+   - `default`: Set to `true` to force path to "/" (useful for default OG images)
+
+## Path Handling
+
+The `path` parameter enhances OG Pilot analytics by tracking which OG images perform better across different pages on your site. By capturing the request path, you get granular insights into click-through rates and engagement for each OG image.
+
+The client automatically injects a `path` parameter on every request:
+
+| Option | Behavior |
+|--------|----------|
+| `default: false` | Uses the current request path when available (via request context or `$_SERVER`), then falls back to `/` |
+| `default: true` | Forces the `path` parameter to `/`, regardless of the current request (unless `path` is provided explicitly) |
+| `path: "/..."` | Uses the provided path verbatim (normalized to start with `/`), overriding auto-resolution |
+
+### Setting Up Request Context
+
+To enable automatic path resolution, set the current request context in your middleware:
+
+**Laravel Middleware:**
+
+```php
+use Sunergos\OgPilot\OgPilot;
+
+class OgPilotMiddleware
+{
+    public function handle($request, $next)
+    {
+        OgPilot::setCurrentRequest([
+            'url' => $request->fullUrl(),
+            'path' => $request->getRequestUri()
+        ]);
+
+        $response = $next($request);
+
+        OgPilot::clearCurrentRequest();
+
+        return $response;
+    }
+}
+```
+
+**Vanilla PHP:**
+
+```php
+use Sunergos\OgPilot\OgPilot;
+
+// At the start of your request handling
+OgPilot::setCurrentRequest([
+    'url' => $_SERVER['REQUEST_URI'] ?? '/'
+]);
+
+// Your application code...
+$imageUrl = OgPilot::createImage(['title' => 'My Page']);
+// path is automatically set from REQUEST_URI
+
+// At the end of your request
+OgPilot::clearCurrentRequest();
+```
+
+**Using withRequestContext (recommended):**
+
+```php
+use Sunergos\OgPilot\OgPilot;
+
+$imageUrl = OgPilot::withRequestContext(
+    ['url' => $_SERVER['REQUEST_URI']],
+    fn() => OgPilot::createImage(['title' => 'My Page'])
+);
+```
+
+### Manual Path Override
+
+```php
+$imageUrl = OgPilot::createImage([
+    'template' => 'page',
+    'title' => 'Hello OG Pilot',
+    'path' => '/pricing?plan=pro'
+]);
+```
+
+### Default Path
+
+```php
+$imageUrl = OgPilot::createImage([
+    'template' => 'blog_post',
+    'title' => 'Default OG Image',
+], [
+    'default' => true
+]);
+// path is set to "/"
+```
 
 ## Configuration Options
 

@@ -28,7 +28,7 @@ class Client
      * Create an OG Pilot image.
      *
      * @param array $params Image parameters (template, title, etc.)
-     * @param array $options Request options (json, iat, headers)
+     * @param array $options Request options (json, iat, headers, default)
      * @return string|array Returns URL string or JSON array based on options
      * @throws ConfigurationException
      * @throws RequestException
@@ -38,8 +38,15 @@ class Client
         $json = $options['json'] ?? false;
         $iat = $options['iat'] ?? null;
         $headers = $options['headers'] ?? [];
+        $useDefault = $options['default'] ?? false;
 
-        $url = $this->buildUrl($params, $iat);
+        // Always include a path; manual overrides win, otherwise resolve from the current request.
+        $resolvedParams = $params;
+        $manualPath = $resolvedParams['path'] ?? null;
+        unset($resolvedParams['path']);
+        $resolvedParams['path'] = $this->resolvePath($manualPath, $useDefault);
+
+        $url = $this->buildUrl($resolvedParams, $iat);
         $response = $this->request($url, $json, $headers);
 
         if ($json) {
@@ -47,6 +54,63 @@ class Client
         }
 
         return $response['location'] ?? $url;
+    }
+
+    /**
+     * Resolve the path parameter for the request.
+     *
+     * Priority: manual path > current request path > "/"
+     */
+    private function resolvePath(mixed $manualPath, bool $useDefault): string
+    {
+        // Manual path always wins if provided
+        if ($manualPath !== null) {
+            $pathStr = trim((string) $manualPath);
+            if ($pathStr !== '') {
+                return $this->normalizePath($pathStr);
+            }
+        }
+
+        // If default is true, return "/"
+        if ($useDefault) {
+            return '/';
+        }
+
+        // Try to get path from current request context
+        $currentPath = RequestContext::getCurrentPath();
+        return $this->normalizePath($currentPath);
+    }
+
+    /**
+     * Normalize a path to ensure it starts with "/" and handles full URLs.
+     */
+    private function normalizePath(?string $path): string
+    {
+        if ($path === null || $path === '') {
+            return '/';
+        }
+
+        $cleaned = trim($path);
+        if ($cleaned === '') {
+            return '/';
+        }
+
+        // Extract path from full URLs
+        if (str_starts_with($cleaned, 'http://') || str_starts_with($cleaned, 'https://')) {
+            $parsed = parse_url($cleaned);
+            if ($parsed !== false) {
+                $urlPath = $parsed['path'] ?? '/';
+                $query = $parsed['query'] ?? '';
+                $cleaned = $query !== '' ? "{$urlPath}?{$query}" : $urlPath;
+            }
+        }
+
+        // Ensure path starts with "/"
+        if (!str_starts_with($cleaned, '/')) {
+            $cleaned = '/' . $cleaned;
+        }
+
+        return $cleaned;
     }
 
     private function request(string $url, bool $json, array $headers): array
