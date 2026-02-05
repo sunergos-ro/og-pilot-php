@@ -1,5 +1,8 @@
 # OG Pilot PHP
 
+> [!IMPORTANT]  
+> An active [OG Pilot](https://ogpilot.com?ref=og-pilot-php) subscription is required to use this package.
+
 A PHP client for generating OG Pilot Open Graph images via signed JWTs, with first-class Laravel support.
 
 ## Requirements
