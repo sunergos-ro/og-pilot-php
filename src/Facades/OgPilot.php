@@ -14,6 +14,13 @@ use Illuminate\Support\Facades\Facade;
  * @method static \Sunergos\OgPilot\Client client()
  * @method static \Sunergos\OgPilot\Client createClient(array $options = [])
  * @method static string|array createImage(array $params = [], array $options = [])
+ * @method static string|array createBlogPostImage(array $params = [], array $options = [])
+ * @method static string|array createPodcastImage(array $params = [], array $options = [])
+ * @method static string|array createProductImage(array $params = [], array $options = [])
+ * @method static string|array createEventImage(array $params = [], array $options = [])
+ * @method static string|array createBookImage(array $params = [], array $options = [])
+ * @method static string|array createCompanyImage(array $params = [], array $options = [])
+ * @method static string|array createPortfolioImage(array $params = [], array $options = [])
  *
  * @see \Sunergos\OgPilot\OgPilot
  */

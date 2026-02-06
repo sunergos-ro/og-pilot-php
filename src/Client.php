@@ -57,6 +57,62 @@ class Client
     }
 
     /**
+     * Create a blog post image.
+     */
+    public function createBlogPostImage(array $params = [], array $options = []): string|array
+    {
+        return $this->createTemplateImage('blog_post', $params, $options);
+    }
+
+    /**
+     * Create a podcast image.
+     */
+    public function createPodcastImage(array $params = [], array $options = []): string|array
+    {
+        return $this->createTemplateImage('podcast', $params, $options);
+    }
+
+    /**
+     * Create a product image.
+     */
+    public function createProductImage(array $params = [], array $options = []): string|array
+    {
+        return $this->createTemplateImage('product', $params, $options);
+    }
+
+    /**
+     * Create an event image.
+     */
+    public function createEventImage(array $params = [], array $options = []): string|array
+    {
+        return $this->createTemplateImage('event', $params, $options);
+    }
+
+    /**
+     * Create a book image.
+     */
+    public function createBookImage(array $params = [], array $options = []): string|array
+    {
+        return $this->createTemplateImage('book', $params, $options);
+    }
+
+    /**
+     * Create a company image.
+     */
+    public function createCompanyImage(array $params = [], array $options = []): string|array
+    {
+        return $this->createTemplateImage('company', $params, $options);
+    }
+
+    /**
+     * Create a portfolio image.
+     */
+    public function createPortfolioImage(array $params = [], array $options = []): string|array
+    {
+        return $this->createTemplateImage('portfolio', $params, $options);
+    }
+
+    /**
      * Resolve the path parameter for the request.
      *
      * Priority: manual path > current request path > "/"
@@ -239,5 +295,13 @@ class Client
         }
 
         return $this->httpClient;
+    }
+
+    private function createTemplateImage(string $template, array $params = [], array $options = []): string|array
+    {
+        return $this->createImage(
+            array_merge($params, ['template' => $template]),
+            $options
+        );
     }
 }

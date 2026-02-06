@@ -151,6 +151,30 @@ The `createImage` method accepts two arguments:
    - `headers`: Additional HTTP headers
    - `default`: Set to `true` to force path to "/" (useful for default OG images)
 
+### Template helpers
+
+`createImage` defaults to the `page` template when `template` is omitted.
+
+Use these helpers to force a specific template:
+
+- `createBlogPostImage(...)`
+- `createPodcastImage(...)`
+- `createProductImage(...)`
+- `createEventImage(...)`
+- `createBookImage(...)`
+- `createCompanyImage(...)`
+- `createPortfolioImage(...)`
+
+These helpers are available on both `Sunergos\OgPilot\OgPilot` and `Sunergos\OgPilot\Client`.
+
+```php
+$imageUrl = OgPilot::createBlogPostImage([
+    'title' => 'How to Build Amazing OG Images',
+    'author_name' => 'Jane Smith',
+    'publish_date' => '2024-01-15',
+]);
+```
+
 ## Path Handling
 
 The `path` parameter enhances OG Pilot analytics by tracking which OG images perform better across different pages on your site. By capturing the request path, you get granular insights into click-through rates and engagement for each OG image.

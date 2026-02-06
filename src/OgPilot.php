@@ -111,4 +111,68 @@ class OgPilot
     {
         return self::client()->createImage($params, $options);
     }
+
+    /**
+     * Create a blog post image using the default configuration.
+     */
+    public static function createBlogPostImage(array $params = [], array $options = []): string|array
+    {
+        return self::createTemplateImage('blog_post', $params, $options);
+    }
+
+    /**
+     * Create a podcast image using the default configuration.
+     */
+    public static function createPodcastImage(array $params = [], array $options = []): string|array
+    {
+        return self::createTemplateImage('podcast', $params, $options);
+    }
+
+    /**
+     * Create a product image using the default configuration.
+     */
+    public static function createProductImage(array $params = [], array $options = []): string|array
+    {
+        return self::createTemplateImage('product', $params, $options);
+    }
+
+    /**
+     * Create an event image using the default configuration.
+     */
+    public static function createEventImage(array $params = [], array $options = []): string|array
+    {
+        return self::createTemplateImage('event', $params, $options);
+    }
+
+    /**
+     * Create a book image using the default configuration.
+     */
+    public static function createBookImage(array $params = [], array $options = []): string|array
+    {
+        return self::createTemplateImage('book', $params, $options);
+    }
+
+    /**
+     * Create a company image using the default configuration.
+     */
+    public static function createCompanyImage(array $params = [], array $options = []): string|array
+    {
+        return self::createTemplateImage('company', $params, $options);
+    }
+
+    /**
+     * Create a portfolio image using the default configuration.
+     */
+    public static function createPortfolioImage(array $params = [], array $options = []): string|array
+    {
+        return self::createTemplateImage('portfolio', $params, $options);
+    }
+
+    private static function createTemplateImage(string $template, array $params = [], array $options = []): string|array
+    {
+        return self::createImage(
+            array_merge($params, ['template' => $template]),
+            $options
+        );
+    }
 }
