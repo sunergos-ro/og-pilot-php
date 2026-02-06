@@ -166,7 +166,45 @@ class Client
             $cleaned = '/' . $cleaned;
         }
 
+        if ($this->config->stripExtensions) {
+            $cleaned = $this->stripExtension($cleaned);
+        }
+
         return $cleaned;
+    }
+
+    private function stripExtension(string $path): string
+    {
+        $questionPos = strpos($path, '?');
+        if ($questionPos !== false) {
+            $pathPart = substr($path, 0, $questionPos);
+            $query = substr($path, $questionPos + 1);
+        } else {
+            $pathPart = $path;
+            $query = null;
+        }
+
+        $lastSlash = strrpos($pathPart, '/');
+        $dir = $lastSlash !== false ? substr($pathPart, 0, $lastSlash) : '';
+        $base = $lastSlash !== false ? substr($pathPart, $lastSlash + 1) : $pathPart;
+
+        // Don't strip dotfiles like ".hidden" or ".env"
+        if (str_starts_with($base, '.')) {
+            return $path;
+        }
+
+        $dotPos = strpos($base, '.');
+        if ($dotPos === false) {
+            return $path; // no extension to strip
+        }
+
+        $stripped = substr($base, 0, $dotPos);
+        $result = $dir !== '' ? "{$dir}/{$stripped}" : "/{$stripped}";
+        if ($result === '') {
+            $result = '/';
+        }
+
+        return $query !== null ? "{$result}?{$query}" : $result;
     }
 
     private function request(string $url, bool $json, array $headers): array

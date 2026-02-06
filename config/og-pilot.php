@@ -55,4 +55,16 @@ return [
     |
     */
     'timeout' => env('OG_PILOT_TIMEOUT', 10.0),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Strip Extensions
+    |--------------------------------------------------------------------------
+    |
+    | When enabled, file extensions are removed from resolved paths so that
+    | /docs.md, /docs.php, and /docs all map to the same "/docs" path.
+    | Dotfiles like /.hidden are left unchanged.
+    |
+    */
+    'strip_extensions' => env('OG_PILOT_STRIP_EXTENSIONS', true),
 ];

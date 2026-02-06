@@ -45,6 +45,7 @@ use Sunergos\OgPilot\OgPilot;
 OgPilot::setConfig([
     'api_key' => 'your-api-key',
     'domain' => 'your-domain.com',
+    // 'strip_extensions' => true,
 ]);
 ```
 
@@ -286,6 +287,38 @@ $imageUrl = OgPilot::createImage([
 | `base_url` | `OG_PILOT_BASE_URL` | `https://ogpilot.com` | API base URL |
 | `connect_timeout` | `OG_PILOT_CONNECT_TIMEOUT` | `5.0` | Connection timeout in seconds |
 | `timeout` | `OG_PILOT_TIMEOUT` | `10.0` | Request timeout in seconds |
+| `strip_extensions` | `OG_PILOT_STRIP_EXTENSIONS` | `true` | Strip file extensions from resolved paths (see [Strip extensions](#strip-extensions)) |
+
+### Strip extensions
+
+When `strip_extensions` is enabled, the client removes file extensions from the
+last segment of every resolved path. This ensures that `/docs`, `/docs.md`,
+`/docs.php`, and `/docs.html` all resolve to `"/docs"`, so analytics are
+consolidated under a single path regardless of the URL extension.
+
+Multiple extensions are also stripped (`/archive.tar.gz` becomes `/archive`).
+Dotfiles like `/.hidden` are left unchanged. Query strings are preserved.
+
+```php
+// Laravel (.env)
+OG_PILOT_STRIP_EXTENSIONS=true
+
+// Standalone PHP
+OgPilot::setConfig([
+    'api_key' => 'your-api-key',
+    'domain' => 'your-domain.com',
+    'strip_extensions' => true,
+]);
+
+// All of these resolve to path "/docs":
+OgPilot::createImage(['title' => 'Docs', 'path' => '/docs']);
+OgPilot::createImage(['title' => 'Docs', 'path' => '/docs.md']);
+OgPilot::createImage(['title' => 'Docs', 'path' => '/docs.php']);
+
+// Nested paths work too: /blog/my-post.html → /blog/my-post
+// Query strings are preserved: /docs.md?ref=main → /docs?ref=main
+// Dotfiles are unchanged: /.hidden stays /.hidden
+```
 
 ## Error Handling
 

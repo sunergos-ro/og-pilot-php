@@ -13,6 +13,7 @@ class Configuration
     public string $baseUrl;
     public float $connectTimeout;
     public float $timeout;
+    public bool $stripExtensions;
 
     public function __construct(array $options = [])
     {
@@ -21,6 +22,7 @@ class Configuration
         $this->baseUrl = $options['base_url'] ?? self::DEFAULT_BASE_URL;
         $this->connectTimeout = $options['connect_timeout'] ?? 5.0;
         $this->timeout = $options['timeout'] ?? 10.0;
+        $this->stripExtensions = $options['strip_extensions'] ?? true;
     }
 
     private function getEnv(string $key): ?string
