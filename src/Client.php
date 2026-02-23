@@ -217,7 +217,7 @@ class Client
         }
 
         try {
-            $response = $client->get($url, [
+            $response = $client->post($url, [
                 RequestOptions::HEADERS => $requestHeaders,
                 RequestOptions::CONNECT_TIMEOUT => $this->config->connectTimeout,
                 RequestOptions::TIMEOUT => $this->config->timeout,

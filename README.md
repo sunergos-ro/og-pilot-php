@@ -152,6 +152,12 @@ The `createImage` method accepts two arguments:
    - `headers`: Additional HTTP headers
    - `default`: Set to `true` to force path to "/" (useful for default OG images)
 
+### HTTP behavior
+
+- Requests are sent as `POST` to `https://ogpilot.com/api/v1/images` (or your configured `base_url`).
+- The signed JWT is still passed as the `token` query parameter.
+- When `json` is `true`, the client sends `Accept: application/json`.
+
 ### Template helpers
 
 `createImage` defaults to the `page` template when `template` is omitted.
