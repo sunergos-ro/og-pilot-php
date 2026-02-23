@@ -155,7 +155,9 @@ The `createImage` method accepts two arguments:
 ### HTTP behavior
 
 - Requests are sent as `POST` to `https://ogpilot.com/api/v1/images` (or your configured `base_url`).
+- Redirect responses are followed automatically.
 - The signed JWT is still passed as the `token` query parameter.
+- In URL mode (`json: false`), `createImage` returns the final redirected URL when available, otherwise the `Location` header, then the original signed request URL as a fallback.
 - When `json` is `true`, the client sends `Accept: application/json`.
 
 ### Template helpers

@@ -38,11 +38,14 @@ class ClientRequestTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_create_image_posts_to_images_endpoint_and_returns_location_header(): void
+    public function test_create_image_follows_redirects_and_returns_final_url(): void
     {
         $history = [];
         $client = $this->makeClient(
-            [new Response(302, ['Location' => 'https://cdn.ogpilot.com/generated.png'])],
+            [
+                new Response(302, ['Location' => 'https://cdn.ogpilot.com/generated.png']),
+                new Response(200, [], ''),
+            ],
             $history
         );
 
@@ -52,13 +55,13 @@ class ClientRequestTest extends TestCase
         ]);
 
         $this->assertSame('https://cdn.ogpilot.com/generated.png', $result);
-        $this->assertCount(1, $history);
+        $this->assertCount(2, $history);
 
-        $request = $history[0]['request'];
-        $this->assertSame('POST', $request->getMethod());
-        $this->assertSame('/api/v1/images', $request->getUri()->getPath());
+        $initialRequest = $history[0]['request'];
+        $this->assertSame('POST', $initialRequest->getMethod());
+        $this->assertSame('/api/v1/images', $initialRequest->getUri()->getPath());
 
-        parse_str($request->getUri()->getQuery(), $query);
+        parse_str($initialRequest->getUri()->getQuery(), $query);
         $this->assertArrayHasKey('token', $query);
 
         $payload = JWT::decode($query['token'], new Key($this->config->apiKey, 'HS256'));
@@ -66,6 +69,27 @@ class ClientRequestTest extends TestCase
         $this->assertSame('/articles/test', $payload->path);
         $this->assertSame('example.com', $payload->iss);
         $this->assertSame('test_api', $payload->sub);
+
+        $redirectRequest = $history[1]['request'];
+        $this->assertSame('GET', $redirectRequest->getMethod());
+        $this->assertSame('https://cdn.ogpilot.com/generated.png', (string) $redirectRequest->getUri());
+    }
+
+    public function test_create_image_falls_back_to_location_header_when_final_url_is_unavailable(): void
+    {
+        $history = [];
+        $client = $this->makeClientWithoutRedirectMiddleware(
+            [new Response(302, ['Location' => 'https://cdn.ogpilot.com/fallback.png'])],
+            $history
+        );
+
+        $result = $client->createImage([
+            'title' => 'Fallback Location',
+            'path' => '/fallback/location',
+        ]);
+
+        $this->assertSame('https://cdn.ogpilot.com/fallback.png', $result);
+        $this->assertCount(1, $history);
     }
 
     public function test_create_image_with_json_option_posts_and_returns_decoded_json(): void
@@ -122,6 +146,19 @@ class ClientRequestTest extends TestCase
     {
         $mock = new MockHandler($responses);
         $handlerStack = HandlerStack::create($mock);
+        $handlerStack->push(Middleware::history($history));
+
+        $httpClient = new HttpClient([
+            'handler' => $handlerStack,
+        ]);
+
+        return new Client($this->config, $httpClient);
+    }
+
+    private function makeClientWithoutRedirectMiddleware(array $responses, array &$history): Client
+    {
+        $mock = new MockHandler($responses);
+        $handlerStack = new HandlerStack($mock);
         $handlerStack->push(Middleware::history($history));
 
         $httpClient = new HttpClient([

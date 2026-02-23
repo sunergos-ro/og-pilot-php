@@ -7,6 +7,7 @@ namespace Sunergos\OgPilot;
 use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\RequestOptions;
+use GuzzleHttp\TransferStats;
 use Sunergos\OgPilot\Exceptions\ConfigurationException;
 use Sunergos\OgPilot\Exceptions\RequestException;
 use DateTimeInterface;
@@ -53,7 +54,7 @@ class Client
             return json_decode($response['body'], true);
         }
 
-        return $response['location'] ?? $url;
+        return $response['final_url'] ?? $response['location'] ?? $url;
     }
 
     /**
@@ -210,6 +211,7 @@ class Client
     private function request(string $url, bool $json, array $headers): array
     {
         $client = $this->getHttpClient();
+        $effectiveUrl = null;
 
         $requestHeaders = $headers;
         if ($json) {
@@ -221,8 +223,14 @@ class Client
                 RequestOptions::HEADERS => $requestHeaders,
                 RequestOptions::CONNECT_TIMEOUT => $this->config->connectTimeout,
                 RequestOptions::TIMEOUT => $this->config->timeout,
-                RequestOptions::ALLOW_REDIRECTS => false,
+                RequestOptions::ALLOW_REDIRECTS => [
+                    'track_redirects' => true,
+                ],
                 RequestOptions::HTTP_ERRORS => false,
+                RequestOptions::ON_STATS => function (TransferStats $stats) use (&$effectiveUrl): void {
+                    $effectiveUri = $stats->getEffectiveUri();
+                    $effectiveUrl = $effectiveUri !== null ? (string) $effectiveUri : null;
+                },
             ]);
 
             $statusCode = $response->getStatusCode();
@@ -235,9 +243,14 @@ class Client
                 );
             }
 
+            $redirectHistory = $response->getHeader('X-Guzzle-Redirect-History');
+            $historyFinalUrl = !empty($redirectHistory) ? end($redirectHistory) : null;
+            $effectiveFinalUrl = ($effectiveUrl !== null && $effectiveUrl !== $url) ? $effectiveUrl : null;
+
             return [
                 'body' => (string) $response->getBody(),
                 'location' => $response->getHeaderLine('Location') ?: null,
+                'final_url' => $historyFinalUrl ?: $effectiveFinalUrl,
             ];
         } catch (GuzzleException $e) {
             throw new RequestException("OG Pilot request failed: {$e->getMessage()}");
