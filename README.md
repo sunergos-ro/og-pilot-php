@@ -157,8 +157,11 @@ The `createImage` method accepts two arguments:
 - Requests are sent as `POST` to `https://ogpilot.com/api/v1/images` (or your configured `base_url`).
 - Redirect responses are followed automatically.
 - The signed JWT is still passed as the `token` query parameter.
-- In URL mode (`json: false`), `createImage` returns the final redirected URL when available, otherwise the `Location` header, then the original signed request URL as a fallback.
+- In URL mode (`json: false`), successful requests return the final redirected URL when available, otherwise the `Location` header, then the original signed request URL as a fallback.
 - When `json` is `true`, the client sends `Accept: application/json`.
+- If image creation fails (request/configuration/validation/etc.), `createImage` does not throw. It logs at error level and returns:
+  - `null` in URL mode
+  - `['image_url' => null]` in JSON mode
 
 ### Template helpers
 
@@ -330,24 +333,24 @@ OgPilot::createImage(['title' => 'Docs', 'path' => '/docs.php']);
 
 ## Error Handling
 
-The package throws specific exceptions for different error scenarios:
+`createImage` is fail-safe and does not throw to your application on runtime failures.
+If generation fails for any reason (request/configuration/validation/etc.), the client logs
+an error and returns a fallback value.
 
 ```php
-use Sunergos\OgPilot\Exceptions\ConfigurationException;
-use Sunergos\OgPilot\Exceptions\RequestException;
-use Sunergos\OgPilot\Exceptions\OgPilotException;
+$imageUrl = OgPilot::createImage(['title' => 'My Image']);
+if ($imageUrl === null) {
+    // Failed to generate image in URL mode
+}
 
-try {
-    $imageUrl = OgPilot::createImage(['title' => 'My Image']);
-} catch (ConfigurationException $e) {
-    // Missing or invalid configuration (API key, domain)
-} catch (RequestException $e) {
-    // HTTP request failed
-    $statusCode = $e->getStatusCode();
-} catch (OgPilotException $e) {
-    // Base exception for all OG Pilot errors
+$json = OgPilot::createImage(['title' => 'My Image'], ['json' => true]);
+if (($json['image_url'] ?? null) === null) {
+    // Failed to generate image in JSON mode
 }
 ```
+
+In Laravel, errors are logged through `Log::error(...)`. In non-Laravel environments,
+the client falls back to PHP `error_log(...)`.
 
 ## Framework Notes
 

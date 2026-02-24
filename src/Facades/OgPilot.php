@@ -13,14 +13,14 @@ use Illuminate\Support\Facades\Facade;
  * @method static void resetConfig()
  * @method static \Sunergos\OgPilot\Client client()
  * @method static \Sunergos\OgPilot\Client createClient(array $options = [])
- * @method static string|array createImage(array $params = [], array $options = [])
- * @method static string|array createBlogPostImage(array $params = [], array $options = [])
- * @method static string|array createPodcastImage(array $params = [], array $options = [])
- * @method static string|array createProductImage(array $params = [], array $options = [])
- * @method static string|array createEventImage(array $params = [], array $options = [])
- * @method static string|array createBookImage(array $params = [], array $options = [])
- * @method static string|array createCompanyImage(array $params = [], array $options = [])
- * @method static string|array createPortfolioImage(array $params = [], array $options = [])
+ * @method static string|array|null createImage(array $params = [], array $options = [])
+ * @method static string|array|null createBlogPostImage(array $params = [], array $options = [])
+ * @method static string|array|null createPodcastImage(array $params = [], array $options = [])
+ * @method static string|array|null createProductImage(array $params = [], array $options = [])
+ * @method static string|array|null createEventImage(array $params = [], array $options = [])
+ * @method static string|array|null createBookImage(array $params = [], array $options = [])
+ * @method static string|array|null createCompanyImage(array $params = [], array $options = [])
+ * @method static string|array|null createPortfolioImage(array $params = [], array $options = [])
  *
  * @see \Sunergos\OgPilot\OgPilot
  */

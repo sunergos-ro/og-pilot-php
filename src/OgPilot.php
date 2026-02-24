@@ -105,9 +105,9 @@ class OgPilot
      *
      * @param array $params Image parameters (template, title, etc.)
      * @param array $options Request options (json, iat, headers)
-     * @return string|array Returns URL string or JSON array based on options
+     * @return string|array|null Returns URL string, JSON array, or fail-safe fallback on error
      */
-    public static function createImage(array $params = [], array $options = []): string|array
+    public static function createImage(array $params = [], array $options = []): string|array|null
     {
         return self::client()->createImage($params, $options);
     }
@@ -115,7 +115,7 @@ class OgPilot
     /**
      * Create a blog post image using the default configuration.
      */
-    public static function createBlogPostImage(array $params = [], array $options = []): string|array
+    public static function createBlogPostImage(array $params = [], array $options = []): string|array|null
     {
         return self::createTemplateImage('blog_post', $params, $options);
     }
@@ -123,7 +123,7 @@ class OgPilot
     /**
      * Create a podcast image using the default configuration.
      */
-    public static function createPodcastImage(array $params = [], array $options = []): string|array
+    public static function createPodcastImage(array $params = [], array $options = []): string|array|null
     {
         return self::createTemplateImage('podcast', $params, $options);
     }
@@ -131,7 +131,7 @@ class OgPilot
     /**
      * Create a product image using the default configuration.
      */
-    public static function createProductImage(array $params = [], array $options = []): string|array
+    public static function createProductImage(array $params = [], array $options = []): string|array|null
     {
         return self::createTemplateImage('product', $params, $options);
     }
@@ -139,7 +139,7 @@ class OgPilot
     /**
      * Create an event image using the default configuration.
      */
-    public static function createEventImage(array $params = [], array $options = []): string|array
+    public static function createEventImage(array $params = [], array $options = []): string|array|null
     {
         return self::createTemplateImage('event', $params, $options);
     }
@@ -147,7 +147,7 @@ class OgPilot
     /**
      * Create a book image using the default configuration.
      */
-    public static function createBookImage(array $params = [], array $options = []): string|array
+    public static function createBookImage(array $params = [], array $options = []): string|array|null
     {
         return self::createTemplateImage('book', $params, $options);
     }
@@ -155,7 +155,7 @@ class OgPilot
     /**
      * Create a company image using the default configuration.
      */
-    public static function createCompanyImage(array $params = [], array $options = []): string|array
+    public static function createCompanyImage(array $params = [], array $options = []): string|array|null
     {
         return self::createTemplateImage('company', $params, $options);
     }
@@ -163,12 +163,12 @@ class OgPilot
     /**
      * Create a portfolio image using the default configuration.
      */
-    public static function createPortfolioImage(array $params = [], array $options = []): string|array
+    public static function createPortfolioImage(array $params = [], array $options = []): string|array|null
     {
         return self::createTemplateImage('portfolio', $params, $options);
     }
 
-    private static function createTemplateImage(string $template, array $params = [], array $options = []): string|array
+    private static function createTemplateImage(string $template, array $params = [], array $options = []): string|array|null
     {
         return self::createImage(
             array_merge($params, ['template' => $template]),

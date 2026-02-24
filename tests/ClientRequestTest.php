@@ -15,6 +15,8 @@ use PHPUnit\Framework\TestCase;
 use Sunergos\OgPilot\Client;
 use Sunergos\OgPilot\Configuration;
 use Sunergos\OgPilot\RequestContext;
+use Sunergos\OgPilot\Exceptions\ConfigurationException;
+use Sunergos\OgPilot\Exceptions\RequestException;
 
 class ClientRequestTest extends TestCase
 {
@@ -142,6 +144,112 @@ class ClientRequestTest extends TestCase
         $this->assertSame($requestQuery['token'] ?? null, $resultQuery['token'] ?? null);
     }
 
+    public function test_create_image_returns_null_and_logs_error_when_validation_fails_in_url_mode(): void
+    {
+        $client = new LoggingClient($this->config);
+
+        $result = $client->createImage([
+            'path' => '/missing/title',
+        ]);
+
+        $this->assertNull($result);
+        $this->assertCount(1, $client->loggedErrors);
+        $this->assertStringContainsString('OG Pilot createImage failed:', $client->loggedErrors[0]['message']);
+        $this->assertSame(\InvalidArgumentException::class, $client->loggedErrors[0]['context']['exception'] ?? null);
+        $this->assertFalse($client->loggedErrors[0]['context']['json'] ?? true);
+    }
+
+    public function test_create_image_returns_null_and_logs_error_when_request_fails_in_url_mode(): void
+    {
+        $httpClient = new HttpClient([
+            'handler' => HandlerStack::create(new MockHandler([
+                new Response(500, [], '{"error":"upstream failure"}'),
+            ])),
+        ]);
+
+        $client = new LoggingClient($this->config, $httpClient);
+
+        $result = $client->createImage([
+            'title' => 'Request Failure URL Mode',
+            'path' => '/request/failure/url',
+        ]);
+
+        $this->assertNull($result);
+        $this->assertCount(1, $client->loggedErrors);
+        $this->assertStringContainsString('OG Pilot createImage failed:', $client->loggedErrors[0]['message']);
+        $this->assertSame(RequestException::class, $client->loggedErrors[0]['context']['exception'] ?? null);
+        $this->assertFalse($client->loggedErrors[0]['context']['json'] ?? true);
+    }
+
+    public function test_create_image_returns_fallback_array_and_logs_error_when_request_fails_in_json_mode(): void
+    {
+        $httpClient = new HttpClient([
+            'handler' => HandlerStack::create(new MockHandler([
+                new Response(500, [], '{"error":"upstream failure"}'),
+            ])),
+        ]);
+
+        $client = new LoggingClient($this->config, $httpClient);
+
+        $result = $client->createImage([
+            'title' => 'Request Failure JSON Mode',
+            'path' => '/request/failure/json',
+        ], [
+            'json' => true,
+        ]);
+
+        $this->assertSame(['image_url' => null], $result);
+        $this->assertCount(1, $client->loggedErrors);
+        $this->assertStringContainsString('OG Pilot createImage failed:', $client->loggedErrors[0]['message']);
+        $this->assertSame(RequestException::class, $client->loggedErrors[0]['context']['exception'] ?? null);
+        $this->assertTrue($client->loggedErrors[0]['context']['json'] ?? false);
+    }
+
+    public function test_create_image_returns_fallback_array_and_logs_error_when_json_response_is_invalid(): void
+    {
+        $httpClient = new HttpClient([
+            'handler' => HandlerStack::create(new MockHandler([
+                new Response(200, [], 'not-json'),
+            ])),
+        ]);
+
+        $client = new LoggingClient($this->config, $httpClient);
+
+        $result = $client->createImage([
+            'title' => 'Invalid JSON response',
+            'path' => '/invalid/json',
+        ], [
+            'json' => true,
+        ]);
+
+        $this->assertSame(['image_url' => null], $result);
+        $this->assertCount(1, $client->loggedErrors);
+        $this->assertStringContainsString('invalid JSON response body', $client->loggedErrors[0]['message']);
+        $this->assertSame(RequestException::class, $client->loggedErrors[0]['context']['exception'] ?? null);
+        $this->assertTrue($client->loggedErrors[0]['context']['json'] ?? false);
+    }
+
+    public function test_create_image_returns_fallback_array_and_logs_error_when_configuration_fails_in_json_mode(): void
+    {
+        $config = new Configuration([
+            'domain' => 'example.com',
+        ]);
+
+        $client = new LoggingClient($config);
+
+        $result = $client->createImage([
+            'title' => 'Missing API key',
+        ], [
+            'json' => true,
+        ]);
+
+        $this->assertSame(['image_url' => null], $result);
+        $this->assertCount(1, $client->loggedErrors);
+        $this->assertStringContainsString('OG Pilot createImage failed:', $client->loggedErrors[0]['message']);
+        $this->assertSame(ConfigurationException::class, $client->loggedErrors[0]['context']['exception'] ?? null);
+        $this->assertTrue($client->loggedErrors[0]['context']['json'] ?? false);
+    }
+
     private function makeClient(array $responses, array &$history): Client
     {
         $mock = new MockHandler($responses);
@@ -166,5 +274,19 @@ class ClientRequestTest extends TestCase
         ]);
 
         return new Client($this->config, $httpClient);
+    }
+}
+
+class LoggingClient extends Client
+{
+    /** @var array<int, array{message: string, context: array}> */
+    public array $loggedErrors = [];
+
+    protected function logError(string $message, array $context = []): void
+    {
+        $this->loggedErrors[] = [
+            'message' => $message,
+            'context' => $context,
+        ];
     }
 }

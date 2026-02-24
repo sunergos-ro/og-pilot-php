@@ -28,39 +28,59 @@ class Client
     /**
      * Create an OG Pilot image.
      *
+     * This method is fail-safe: if any error occurs (configuration, validation,
+     * request, etc.), the error is logged and a fallback value is returned.
+     *
      * @param array $params Image parameters (template, title, etc.)
      * @param array $options Request options (json, iat, headers, default)
-     * @return string|array Returns URL string or JSON array based on options
-     * @throws ConfigurationException
-     * @throws RequestException
+     * @return string|array|null Returns URL string, JSON array, or fallback value on failure
      */
-    public function createImage(array $params = [], array $options = []): string|array
+    public function createImage(array $params = [], array $options = []): string|array|null
     {
         $json = $options['json'] ?? false;
         $iat = $options['iat'] ?? null;
         $headers = $options['headers'] ?? [];
         $useDefault = $options['default'] ?? false;
 
-        // Always include a path; manual overrides win, otherwise resolve from the current request.
-        $resolvedParams = $params;
-        $manualPath = $resolvedParams['path'] ?? null;
-        unset($resolvedParams['path']);
-        $resolvedParams['path'] = $this->resolvePath($manualPath, $useDefault);
+        try {
+            // Always include a path; manual overrides win, otherwise resolve from the current request.
+            $resolvedParams = $params;
+            $manualPath = $resolvedParams['path'] ?? null;
+            unset($resolvedParams['path']);
+            $resolvedParams['path'] = $this->resolvePath($manualPath, $useDefault);
 
-        $url = $this->buildUrl($resolvedParams, $iat);
-        $response = $this->request($url, $json, $headers);
+            $url = $this->buildUrl($resolvedParams, $iat);
+            $response = $this->request($url, $json, $headers);
 
-        if ($json) {
-            return json_decode($response['body'], true);
+            if ($json) {
+                $decoded = json_decode($response['body'], true);
+                if (!is_array($decoded)) {
+                    throw new RequestException(
+                        'OG Pilot request failed: invalid JSON response body (' . json_last_error_msg() . ')'
+                    );
+                }
+
+                return $decoded;
+            }
+
+            return $response['final_url'] ?? $response['location'] ?? $url;
+        } catch (\Throwable $e) {
+            $this->logError(
+                "OG Pilot createImage failed: {$e->getMessage()}",
+                [
+                    'exception' => $e::class,
+                    'json' => $json,
+                ]
+            );
+
+            return $json ? ['image_url' => null] : null;
         }
-
-        return $response['final_url'] ?? $response['location'] ?? $url;
     }
 
     /**
      * Create a blog post image.
      */
-    public function createBlogPostImage(array $params = [], array $options = []): string|array
+    public function createBlogPostImage(array $params = [], array $options = []): string|array|null
     {
         return $this->createTemplateImage('blog_post', $params, $options);
     }
@@ -68,7 +88,7 @@ class Client
     /**
      * Create a podcast image.
      */
-    public function createPodcastImage(array $params = [], array $options = []): string|array
+    public function createPodcastImage(array $params = [], array $options = []): string|array|null
     {
         return $this->createTemplateImage('podcast', $params, $options);
     }
@@ -76,7 +96,7 @@ class Client
     /**
      * Create a product image.
      */
-    public function createProductImage(array $params = [], array $options = []): string|array
+    public function createProductImage(array $params = [], array $options = []): string|array|null
     {
         return $this->createTemplateImage('product', $params, $options);
     }
@@ -84,7 +104,7 @@ class Client
     /**
      * Create an event image.
      */
-    public function createEventImage(array $params = [], array $options = []): string|array
+    public function createEventImage(array $params = [], array $options = []): string|array|null
     {
         return $this->createTemplateImage('event', $params, $options);
     }
@@ -92,7 +112,7 @@ class Client
     /**
      * Create a book image.
      */
-    public function createBookImage(array $params = [], array $options = []): string|array
+    public function createBookImage(array $params = [], array $options = []): string|array|null
     {
         return $this->createTemplateImage('book', $params, $options);
     }
@@ -100,7 +120,7 @@ class Client
     /**
      * Create a company image.
      */
-    public function createCompanyImage(array $params = [], array $options = []): string|array
+    public function createCompanyImage(array $params = [], array $options = []): string|array|null
     {
         return $this->createTemplateImage('company', $params, $options);
     }
@@ -108,7 +128,7 @@ class Client
     /**
      * Create a portfolio image.
      */
-    public function createPortfolioImage(array $params = [], array $options = []): string|array
+    public function createPortfolioImage(array $params = [], array $options = []): string|array|null
     {
         return $this->createTemplateImage('portfolio', $params, $options);
     }
@@ -348,11 +368,35 @@ class Client
         return $this->httpClient;
     }
 
-    private function createTemplateImage(string $template, array $params = [], array $options = []): string|array
+    private function createTemplateImage(string $template, array $params = [], array $options = []): string|array|null
     {
         return $this->createImage(
             array_merge($params, ['template' => $template]),
             $options
         );
+    }
+
+    /**
+     * Log errors at error level when Laravel logging is available.
+     * Falls back to PHP error_log otherwise.
+     */
+    protected function logError(string $message, array $context = []): void
+    {
+        if (class_exists(\Illuminate\Support\Facades\Log::class)) {
+            try {
+                \Illuminate\Support\Facades\Log::error($message, $context);
+                return;
+            } catch (\Throwable) {
+                // Fall through to error_log.
+            }
+        }
+
+        $encodedContext = $context === [] ? '' : json_encode($context);
+        if ($encodedContext === false || $encodedContext === '') {
+            error_log($message);
+            return;
+        }
+
+        error_log("{$message} {$encodedContext}");
     }
 }
