@@ -14,6 +14,7 @@ class Configuration
     public float $connectTimeout;
     public float $timeout;
     public bool $stripExtensions;
+    public bool $stripQueryParameters;
 
     public function __construct(array $options = [])
     {
@@ -23,6 +24,7 @@ class Configuration
         $this->connectTimeout = $options['connect_timeout'] ?? 5.0;
         $this->timeout = $options['timeout'] ?? 10.0;
         $this->stripExtensions = $options['strip_extensions'] ?? true;
+        $this->stripQueryParameters = $options['strip_query_parameters'] ?? false;
     }
 
     private function getEnv(string $key): ?string

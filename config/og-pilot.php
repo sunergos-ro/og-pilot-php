@@ -67,4 +67,15 @@ return [
     |
     */
     'strip_extensions' => env('OG_PILOT_STRIP_EXTENSIONS', true),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Strip Query Parameters
+    |--------------------------------------------------------------------------
+    |
+    | When enabled, the query string is removed before building the signed
+    | payload so analytics see /foo and /foo?bar as the same path.
+    |
+    */
+    'strip_query_parameters' => env('OG_PILOT_STRIP_QUERY_PARAMETERS', false),
 ];

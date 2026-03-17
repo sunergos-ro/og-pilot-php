@@ -734,6 +734,7 @@ $imageUrl = OgPilot::createImage([
 | `connect_timeout` | `OG_PILOT_CONNECT_TIMEOUT` | `5.0` | Connection timeout in seconds |
 | `timeout` | `OG_PILOT_TIMEOUT` | `10.0` | Request timeout in seconds |
 | `strip_extensions` | `OG_PILOT_STRIP_EXTENSIONS` | `true` | Strip file extensions from resolved paths (see [Strip extensions](#strip-extensions)) |
+| `strip_query_parameters` | `OG_PILOT_STRIP_QUERY_PARAMETERS` | `false` | Remove query strings from resolved paths before signing (see [Strip query parameters](#strip-query-parameters)) |
 
 ### Strip extensions
 
@@ -764,6 +765,32 @@ OgPilot::createImage(['title' => 'Docs', 'path' => '/docs.php']);
 // Nested paths work too: /blog/my-post.html → /blog/my-post
 // Query strings are preserved: /docs.md?ref=main → /docs?ref=main
 // Dotfiles are unchanged: /.hidden stays /.hidden
+```
+
+### Strip query parameters
+
+When `strip_query_parameters` is enabled, the client removes the query string
+from every resolved path before it signs the payload. This keeps analytics
+grouped under the canonical path even when URLs differ only by tracking or
+pagination parameters. It works alongside `strip_extensions`, so
+`/archive.tar.gz?ref=campaign` resolves to `"/archive"` when both options are
+enabled.
+
+```php
+// Laravel (.env)
+OG_PILOT_STRIP_QUERY_PARAMETERS=true
+
+// Standalone PHP
+OgPilot::setConfig([
+    'api_key' => 'your-api-key',
+    'domain' => 'your-domain.com',
+    'strip_query_parameters' => true,
+]);
+
+// All of these resolve to "/docs":
+OgPilot::createImage(['title' => 'Docs', 'path' => '/docs']);
+OgPilot::createImage(['title' => 'Docs', 'path' => '/docs?ref=main']);
+OgPilot::createImage(['title' => 'Docs', 'path' => 'https://example.com/docs?ref=campaign']);
 ```
 
 ## Error Handling

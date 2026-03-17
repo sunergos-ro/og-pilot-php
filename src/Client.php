@@ -191,6 +191,10 @@ class Client
             $cleaned = $this->stripExtension($cleaned);
         }
 
+        if ($this->config->stripQueryParameters) {
+            $cleaned = $this->stripQueryParameters($cleaned);
+        }
+
         return $cleaned;
     }
 
@@ -226,6 +230,16 @@ class Client
         }
 
         return $query !== null ? "{$result}?{$query}" : $result;
+    }
+
+    private function stripQueryParameters(string $path): string
+    {
+        $questionPos = strpos($path, '?');
+        if ($questionPos !== false) {
+            return substr($path, 0, $questionPos);
+        }
+
+        return $path;
     }
 
     private function request(string $url, bool $json, array $headers): array

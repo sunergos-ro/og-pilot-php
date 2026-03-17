@@ -16,6 +16,7 @@ class ConfigurationTest extends TestCase
         $this->assertEquals('https://ogpilot.com', $config->baseUrl);
         $this->assertEquals(5.0, $config->connectTimeout);
         $this->assertEquals(10.0, $config->timeout);
+        $this->assertFalse($config->stripQueryParameters);
     }
 
     public function test_configuration_accepts_custom_values(): void
@@ -26,6 +27,7 @@ class ConfigurationTest extends TestCase
             'base_url' => 'https://custom.ogpilot.com',
             'connect_timeout' => 3.0,
             'timeout' => 8.0,
+            'strip_query_parameters' => true,
         ]);
 
         $this->assertEquals('test-api-key', $config->apiKey);
@@ -33,5 +35,6 @@ class ConfigurationTest extends TestCase
         $this->assertEquals('https://custom.ogpilot.com', $config->baseUrl);
         $this->assertEquals(3.0, $config->connectTimeout);
         $this->assertEquals(8.0, $config->timeout);
+        $this->assertTrue($config->stripQueryParameters);
     }
 }

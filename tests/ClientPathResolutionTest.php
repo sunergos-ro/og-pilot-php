@@ -148,6 +148,30 @@ class ClientPathResolutionTest extends TestCase
         $this->assertEquals('/foo/bar', $path);
     }
 
+    public function test_normalize_path_preserves_query_string_by_default(): void
+    {
+        $path = $this->invokeNormalizePath('/docs?ref=main');
+
+        $this->assertEquals('/docs?ref=main', $path);
+    }
+
+    public function test_normalize_path_drops_query_string_when_enabled(): void
+    {
+        $this->config->stripQueryParameters = true;
+        $path = $this->invokeNormalizePath('/docs?ref=main');
+
+        $this->assertEquals('/docs', $path);
+    }
+
+    public function test_normalize_path_combines_extension_and_query_stripping(): void
+    {
+        $this->config->stripExtensions = true;
+        $this->config->stripQueryParameters = true;
+        $path = $this->invokeNormalizePath('/archive.tar.gz?utm=1');
+
+        $this->assertEquals('/archive', $path);
+    }
+
     // Helper methods to invoke private methods
 
     private function invokeResolvePath(mixed $manualPath, bool $useDefault): string
