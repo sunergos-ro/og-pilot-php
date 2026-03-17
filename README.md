@@ -46,6 +46,7 @@ OgPilot::setConfig([
     'api_key' => 'your-api-key',
     'domain' => 'your-domain.com',
     // 'strip_extensions' => true,
+    // 'strip_query_parameters' => true,
 ]);
 ```
 
@@ -770,11 +771,10 @@ OgPilot::createImage(['title' => 'Docs', 'path' => '/docs.php']);
 ### Strip query parameters
 
 When `strip_query_parameters` is enabled, the client removes the query string
-from every resolved path before it signs the payload. This keeps analytics
-grouped under the canonical path even when URLs differ only by tracking or
-pagination parameters. It works alongside `strip_extensions`, so
-`/archive.tar.gz?ref=campaign` resolves to `"/archive"` when both options are
-enabled.
+from resolved paths after normalization (and after extensions are stripped), so
+`/docs?ref=main`, `/docs?ref=prod`, and `/docs` all sign the same payload.
+This keeps analytics data grouped under a single path even when users append
+tracking parameters.
 
 ```php
 // Laravel (.env)
@@ -787,10 +787,7 @@ OgPilot::setConfig([
     'strip_query_parameters' => true,
 ]);
 
-// All of these resolve to "/docs":
-OgPilot::createImage(['title' => 'Docs', 'path' => '/docs']);
-OgPilot::createImage(['title' => 'Docs', 'path' => '/docs?ref=main']);
-OgPilot::createImage(['title' => 'Docs', 'path' => 'https://example.com/docs?ref=campaign']);
+// When enabled, /docs.md?ref=main resolves to /docs before signing.
 ```
 
 ## Error Handling
