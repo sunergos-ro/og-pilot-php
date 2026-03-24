@@ -94,6 +94,23 @@ class ClientRequestTest extends TestCase
         $this->assertCount(1, $history);
     }
 
+    public function test_create_image_returns_null_when_location_header_points_to_status_placeholder(): void
+    {
+        $history = [];
+        $client = $this->makeClientWithoutRedirectMiddleware(
+            [new Response(302, ['Location' => 'https://cdn.ogpilot.com/status/processing.jpg'])],
+            $history
+        );
+
+        $result = $client->createImage([
+            'title' => 'Status Placeholder',
+            'path' => '/status/placeholder',
+        ]);
+
+        $this->assertNull($result);
+        $this->assertCount(1, $history);
+    }
+
     public function test_create_image_with_json_option_posts_and_returns_decoded_json(): void
     {
         $history = [];

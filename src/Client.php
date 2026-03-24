@@ -63,7 +63,8 @@ class Client
                 return $decoded;
             }
 
-            return $response['final_url'] ?? $response['location'] ?? $url;
+            $imageUrl = $response['final_url'] ?? $response['location'] ?? $url;
+            return $this->isStatusPlaceholder($imageUrl) ? null : $imageUrl;
         } catch (\Throwable $e) {
             $this->logError(
                 "OG Pilot createImage failed: {$e->getMessage()}",
@@ -240,6 +241,15 @@ class Client
         }
 
         return $path;
+    }
+
+    private function isStatusPlaceholder(?string $url): bool
+    {
+        if ($url === null || $url === '') {
+            return false;
+        }
+
+        return (bool) preg_match('#/status/(?:processing|failed)\.(?:jpg|png)$#', $url);
     }
 
     private function request(string $url, bool $json, array $headers): array
