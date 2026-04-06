@@ -44,7 +44,7 @@ class Client
 
         try {
             // Always include a path; manual overrides win, otherwise resolve from the current request.
-            $resolvedParams = $params;
+            $resolvedParams = $this->applyConfiguredImageDefaults($params);
             $manualPath = $resolvedParams['path'] ?? null;
             unset($resolvedParams['path']);
             $resolvedParams['path'] = $this->resolvePath($manualPath, $useDefault);
@@ -241,6 +241,25 @@ class Client
         }
 
         return $path;
+    }
+
+    private function applyConfiguredImageDefaults(array $params): array
+    {
+        $defaults = [
+            'image_type' => $this->config->imageType,
+            'quality' => $this->config->quality,
+            'max_bytes' => $this->config->maxBytes,
+        ];
+
+        foreach ($defaults as $key => $value) {
+            if ($value === null || array_key_exists($key, $params)) {
+                continue;
+            }
+
+            $params[$key] = $value;
+        }
+
+        return $params;
     }
 
     private function isStatusPlaceholder(?string $url): bool

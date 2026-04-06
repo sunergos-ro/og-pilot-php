@@ -78,4 +78,35 @@ return [
     |
     */
     'strip_query_parameters' => env('OG_PILOT_STRIP_QUERY_PARAMETERS', false),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Default Image Type
+    |--------------------------------------------------------------------------
+    |
+    | Set a default delivered image format for all signed requests. Supported
+    | values are jpeg, png, webp, and gif.
+    |
+    */
+    'image_type' => env('OG_PILOT_IMAGE_TYPE'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Default Quality
+    |--------------------------------------------------------------------------
+    |
+    | Set a default delivered image quality from 1 to 100.
+    |
+    */
+    'quality' => env('OG_PILOT_QUALITY'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Default Max Bytes
+    |--------------------------------------------------------------------------
+    |
+    | Set a default delivered image byte cap for OG assets.
+    |
+    */
+    'max_bytes' => env('OG_PILOT_MAX_BYTES'),
 ];

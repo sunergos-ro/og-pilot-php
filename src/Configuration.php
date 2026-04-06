@@ -15,6 +15,9 @@ class Configuration
     public float $timeout;
     public bool $stripExtensions;
     public bool $stripQueryParameters;
+    public ?string $imageType;
+    public ?int $quality;
+    public ?int $maxBytes;
 
     public function __construct(array $options = [])
     {
@@ -25,11 +28,23 @@ class Configuration
         $this->timeout = $options['timeout'] ?? 10.0;
         $this->stripExtensions = $options['strip_extensions'] ?? true;
         $this->stripQueryParameters = $options['strip_query_parameters'] ?? false;
+        $this->imageType = isset($options['image_type']) ? (string) $options['image_type'] : null;
+        $this->quality = array_key_exists('quality', $options) ? $this->normalizeNullableInt($options['quality']) : null;
+        $this->maxBytes = array_key_exists('max_bytes', $options) ? $this->normalizeNullableInt($options['max_bytes']) : null;
     }
 
     private function getEnv(string $key): ?string
     {
         $value = getenv($key);
         return $value !== false ? $value : null;
+    }
+
+    private function normalizeNullableInt(mixed $value): ?int
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        return (int) $value;
     }
 }

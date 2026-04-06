@@ -54,6 +54,9 @@ class ClientRequestTest extends TestCase
         $result = $client->createImage([
             'title' => 'Hello OG Pilot',
             'path' => '/articles/test',
+            'image_type' => 'webp',
+            'quality' => 82,
+            'max_bytes' => 220000,
         ]);
 
         $this->assertSame('https://cdn.ogpilot.com/generated.png', $result);
@@ -69,6 +72,9 @@ class ClientRequestTest extends TestCase
         $payload = JWT::decode($query['token'], new Key($this->config->apiKey, 'HS256'));
         $this->assertSame('Hello OG Pilot', $payload->title);
         $this->assertSame('/articles/test', $payload->path);
+        $this->assertSame('webp', $payload->image_type);
+        $this->assertSame(82, $payload->quality);
+        $this->assertSame(220000, $payload->max_bytes);
         $this->assertSame('example.com', $payload->iss);
         $this->assertSame('test_api', $payload->sub);
 
@@ -135,6 +141,53 @@ class ClientRequestTest extends TestCase
         $request = $history[0]['request'];
         $this->assertSame('POST', $request->getMethod());
         $this->assertSame('application/json', $request->getHeaderLine('Accept'));
+    }
+
+    public function test_create_image_applies_configured_delivery_defaults(): void
+    {
+        $history = [];
+        $this->config->imageType = 'webp';
+        $this->config->quality = 82;
+        $this->config->maxBytes = 220000;
+        $client = $this->makeClient([new Response(200, [], '')], $history);
+
+        $client->createImage([
+            'title' => 'Configured delivery defaults',
+            'path' => '/docs',
+        ]);
+
+        $request = $history[0]['request'];
+        parse_str($request->getUri()->getQuery(), $query);
+        $payload = JWT::decode($query['token'], new Key($this->config->apiKey, 'HS256'));
+
+        $this->assertSame('webp', $payload->image_type);
+        $this->assertSame(82, $payload->quality);
+        $this->assertSame(220000, $payload->max_bytes);
+    }
+
+    public function test_create_image_prefers_explicit_delivery_options_over_configured_defaults(): void
+    {
+        $history = [];
+        $this->config->imageType = 'webp';
+        $this->config->quality = 82;
+        $this->config->maxBytes = 220000;
+        $client = $this->makeClient([new Response(200, [], '')], $history);
+
+        $client->createImage([
+            'title' => 'Explicit delivery overrides',
+            'path' => '/docs',
+            'image_type' => 'png',
+            'quality' => 65,
+            'max_bytes' => 180000,
+        ]);
+
+        $request = $history[0]['request'];
+        parse_str($request->getUri()->getQuery(), $query);
+        $payload = JWT::decode($query['token'], new Key($this->config->apiKey, 'HS256'));
+
+        $this->assertSame('png', $payload->image_type);
+        $this->assertSame(65, $payload->quality);
+        $this->assertSame(180000, $payload->max_bytes);
     }
 
     public function test_create_image_returns_signed_url_when_location_header_is_missing(): void

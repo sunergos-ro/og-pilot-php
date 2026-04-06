@@ -33,6 +33,9 @@ Add your credentials to your `.env` file:
 ```env
 OG_PILOT_API_KEY=your-api-key
 OG_PILOT_DOMAIN=your-domain.com
+OG_PILOT_IMAGE_TYPE=webp
+OG_PILOT_QUALITY=82
+OG_PILOT_MAX_BYTES=220000
 ```
 
 ### Standalone PHP
@@ -45,12 +48,16 @@ use Sunergos\OgPilot\OgPilot;
 OgPilot::setConfig([
     'api_key' => 'your-api-key',
     'domain' => 'your-domain.com',
+    'image_type' => 'webp',
+    'quality' => 82,
+    'max_bytes' => 220000,
     // 'strip_extensions' => true,
     // 'strip_query_parameters' => true,
 ]);
 ```
 
-Or use environment variables `OG_PILOT_API_KEY` and `OG_PILOT_DOMAIN`.
+Or use environment variables like `OG_PILOT_API_KEY`, `OG_PILOT_DOMAIN`,
+`OG_PILOT_IMAGE_TYPE`, `OG_PILOT_QUALITY`, and `OG_PILOT_MAX_BYTES`.
 
 ## Usage
 
@@ -96,6 +103,9 @@ use Sunergos\OgPilot\OgPilot;
 OgPilot::setConfig([
     'api_key' => 'your-api-key',
     'domain' => 'your-domain.com',
+    'image_type' => 'webp',
+    'quality' => 82,
+    'max_bytes' => 220000,
 ]);
 
 // Generate an image URL
@@ -125,6 +135,9 @@ $client = OgPilot::createClient([
     'domain' => 'your-domain.com',
     'connect_timeout' => 3.0,
     'timeout' => 8.0,
+    'image_type' => 'webp',
+    'quality' => 82,
+    'max_bytes' => 220000,
 ]);
 
 $url = $client->createImage(['title' => 'Hello']);
@@ -133,8 +146,12 @@ $url = $client->createImage(['title' => 'Hello']);
 $client = new Client([
     'api_key' => 'your-api-key',
     'domain' => 'your-domain.com',
+    'image_type' => 'webp',
 ]);
 ```
+
+Per-call `image_type`, `quality`, and `max_bytes` values still override those
+global defaults when you need a one-off delivery profile.
 
 ### Options
 
@@ -145,6 +162,9 @@ The `createImage` method accepts two arguments:
    - `title`: Image title (required)
    - `description`: Image description
    - `path`: Request path for analytics (auto-resolved if not provided)
+   - `image_type`: Delivered image format (`jpeg`, `png`, `webp`, or `gif`)
+   - `quality`: Delivered image quality (`1`-`100`)
+   - `max_bytes`: Maximum delivered image size in bytes
    - Any other template-specific parameters
 
 2. **options** (array): Request options
@@ -736,6 +756,9 @@ $imageUrl = OgPilot::createImage([
 | `timeout` | `OG_PILOT_TIMEOUT` | `10.0` | Request timeout in seconds |
 | `strip_extensions` | `OG_PILOT_STRIP_EXTENSIONS` | `true` | Strip file extensions from resolved paths (see [Strip extensions](#strip-extensions)) |
 | `strip_query_parameters` | `OG_PILOT_STRIP_QUERY_PARAMETERS` | `false` | Remove query strings from resolved paths before signing (see [Strip query parameters](#strip-query-parameters)) |
+| `image_type` | `OG_PILOT_IMAGE_TYPE` | `null` | Default delivered image format: `jpeg`, `png`, `webp`, or `gif` |
+| `quality` | `OG_PILOT_QUALITY` | `null` | Default delivered image quality from `1` to `100` |
+| `max_bytes` | `OG_PILOT_MAX_BYTES` | `null` | Default maximum delivered image size in bytes |
 
 ### Strip extensions
 
